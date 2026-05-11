@@ -790,14 +790,14 @@ const AdminDashboard = () => {
                 </form>
 
                 <div className={ADMIN_COMPACT_TABLE_SCROLL_CLASS}>
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="min-w-[46rem] divide-y divide-gray-200">
                     <thead className={ADMIN_COMPACT_TABLE_HEAD_CLASS}>
                       <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <th className="py-3 pr-4">邀请码</th>
-                        <th className="py-3 pr-4">状态</th>
-                        <th className="py-3 pr-4">来源</th>
-                        <th className="py-3 pr-4">注册用户</th>
-                        <th className="py-3 pr-4">操作</th>
+                        <th className="py-3 pr-4 whitespace-nowrap">邀请码</th>
+                        <th className="py-3 pr-4 whitespace-nowrap">状态</th>
+                        <th className="py-3 pr-4 whitespace-nowrap">来源</th>
+                        <th className="py-3 pr-4 whitespace-nowrap">注册用户</th>
+                        <th className="py-3 pr-4 whitespace-nowrap">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -807,7 +807,7 @@ const AdminDashboard = () => {
                         </tr>
                       ) : invites.map((invite) => (
                         <tr key={invite.id}>
-                          <td className="py-3 pr-4">
+                          <td className="py-3 pr-4 whitespace-nowrap">
                             <button
                               onClick={() => copyToClipboard(invite.code)}
                               className="font-mono text-sm text-blue-700 hover:text-blue-900"
@@ -816,14 +816,14 @@ const AdminDashboard = () => {
                               {invite.code}
                             </button>
                           </td>
-                          <td className="py-3 pr-4">
+                          <td className="py-3 pr-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               invite.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
                             }`}>
                               {invite.is_active ? '启用' : '停用'}
                             </span>
                           </td>
-                          <td className="py-3 pr-4 text-sm text-gray-700">
+                          <td className="py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
                             {invite.created_by_type === 'user' ? (
                               <div>
                                 <div className="font-medium text-gray-900">
@@ -837,7 +837,7 @@ const AdminDashboard = () => {
                               </span>
                             )}
                           </td>
-                          <td className="py-3 pr-4 text-sm text-gray-700">
+                          <td className="py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
                             {invite.used_by_user_id ? (
                               <div>
                                 <div className="font-medium text-gray-900">
@@ -847,7 +847,7 @@ const AdminDashboard = () => {
                               </div>
                             ) : '-'}
                           </td>
-                          <td className="py-3 pr-4">
+                          <td className="py-3 pr-4 whitespace-nowrap">
                             <button
                               onClick={() => handleToggleInvite(invite.id)}
                               className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded transition-colors"
