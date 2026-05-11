@@ -358,6 +358,54 @@ def test_admin_can_create_list_and_toggle_registration_invites(client):
     assert toggle_response.json()["is_active"] is False
 
 
+def test_admin_invite_list_includes_creator_and_used_user_identity(client):
+    from app.database import SessionLocal
+    from app.models.models import RegistrationInvite, User
+
+    db = SessionLocal()
+    try:
+        inviter = User(
+            username="alice",
+            nickname="Alice Chen",
+            access_link="http://testserver/access/alice-inviter",
+            is_active=True,
+            credit_balance=0,
+        )
+        used_user = User(
+            username="bob",
+            nickname="Bob Li",
+            access_link="http://testserver/access/bob-used",
+            is_active=True,
+            credit_balance=0,
+        )
+        db.add_all([inviter, used_user])
+        db.flush()
+        db.add_all([
+            RegistrationInvite(code="ADMIN-INVITE", is_active=True),
+            RegistrationInvite(
+                code="USER-INVITE",
+                is_active=False,
+                created_by_user_id=inviter.id,
+                used_by_user_id=used_user.id,
+            ),
+        ])
+        db.commit()
+    finally:
+        db.close()
+
+    response = client.get("/api/admin/invites", headers=_admin_auth_headers(client))
+
+    assert response.status_code == 200
+    invites = {item["code"]: item for item in response.json()}
+    assert invites["ADMIN-INVITE"]["created_by_type"] == "admin"
+    assert invites["ADMIN-INVITE"]["created_by_display_name"] is None
+    assert invites["USER-INVITE"]["created_by_type"] == "user"
+    assert invites["USER-INVITE"]["created_by_username"] == "alice"
+    assert invites["USER-INVITE"]["created_by_display_name"] == "Alice Chen"
+    assert invites["USER-INVITE"]["used_by_username"] == "bob"
+    assert invites["USER-INVITE"]["used_by_display_name"] == "Bob Li"
+
+
 def test_admin_can_toggle_user_unlimited_flag(client):
     from app.database import SessionLocal
     from app.models.models import User

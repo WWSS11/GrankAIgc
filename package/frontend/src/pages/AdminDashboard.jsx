@@ -795,14 +795,15 @@ const AdminDashboard = () => {
                       <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <th className="py-3 pr-4">邀请码</th>
                         <th className="py-3 pr-4">状态</th>
-                        <th className="py-3 pr-4">使用者</th>
+                        <th className="py-3 pr-4">来源</th>
+                        <th className="py-3 pr-4">注册用户</th>
                         <th className="py-3 pr-4">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {invites.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="py-8 text-center text-sm text-gray-500">暂无邀请码</td>
+                          <td colSpan="5" className="py-8 text-center text-sm text-gray-500">暂无邀请码</td>
                         </tr>
                       ) : invites.map((invite) => (
                         <tr key={invite.id}>
@@ -822,7 +823,30 @@ const AdminDashboard = () => {
                               {invite.is_active ? '启用' : '停用'}
                             </span>
                           </td>
-                          <td className="py-3 pr-4 text-sm text-gray-600">{invite.used_by_user_id || '-'}</td>
+                          <td className="py-3 pr-4 text-sm text-gray-700">
+                            {invite.created_by_type === 'user' ? (
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {invite.created_by_display_name || `用户 #${invite.created_by_user_id}`}
+                                </div>
+                                <div className="text-xs text-gray-500">用户邀请 · ID #{invite.created_by_user_id}</div>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                                管理员创建
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 pr-4 text-sm text-gray-700">
+                            {invite.used_by_user_id ? (
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {invite.used_by_display_name || `用户 #${invite.used_by_user_id}`}
+                                </div>
+                                <div className="text-xs text-gray-500">ID #{invite.used_by_user_id}</div>
+                              </div>
+                            ) : '-'}
+                          </td>
                           <td className="py-3 pr-4">
                             <button
                               onClick={() => handleToggleInvite(invite.id)}

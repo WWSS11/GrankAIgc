@@ -80,7 +80,15 @@ class InviteResponse(BaseModel):
     code: str
     is_active: bool
     expires_at: Optional[datetime] = None
+    created_by_user_id: Optional[int] = None
+    created_by_username: Optional[str] = None
+    created_by_nickname: Optional[str] = None
+    created_by_display_name: Optional[str] = None
+    created_by_type: str = "admin"
     used_by_user_id: Optional[int] = None
+    used_by_username: Optional[str] = None
+    used_by_nickname: Optional[str] = None
+    used_by_display_name: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -185,6 +193,35 @@ def serialize_admin_audit_log(log: AdminAuditLog) -> Dict[str, Any]:
     }
 
 
+def _user_display_name(user: Optional[User], fallback_id: Optional[int] = None) -> Optional[str]:
+    if user:
+        return user.nickname or user.username or f"用户 #{user.id}"
+    if fallback_id is not None:
+        return f"用户 #{fallback_id}"
+    return None
+
+
+def serialize_registration_invite(invite: RegistrationInvite) -> Dict[str, Any]:
+    creator = invite.created_by_user
+    used_by = invite.used_by_user
+    return {
+        "id": invite.id,
+        "code": invite.code,
+        "is_active": invite.is_active,
+        "expires_at": invite.expires_at,
+        "created_by_user_id": invite.created_by_user_id,
+        "created_by_username": creator.username if creator else None,
+        "created_by_nickname": creator.nickname if creator else None,
+        "created_by_display_name": _user_display_name(creator, invite.created_by_user_id),
+        "created_by_type": "user" if invite.created_by_user_id else "admin",
+        "used_by_user_id": invite.used_by_user_id,
+        "used_by_username": used_by.username if used_by else None,
+        "used_by_nickname": used_by.nickname if used_by else None,
+        "used_by_display_name": _user_display_name(used_by, invite.used_by_user_id),
+        "created_at": invite.created_at,
+    }
+
+
 def _model_to_dict(record: Any) -> Dict[str, Any]:
     data: Dict[str, Any] = {}
     mapper = inspect(record).mapper
@@ -267,7 +304,7 @@ async def create_registration_invite(
     payload: InviteCreateRequest,
     admin_username: str = Depends(get_admin_from_token),
     db: Session = Depends(get_db),
-) -> RegistrationInvite:
+) -> Dict[str, Any]:
     code = payload.code or secrets.token_urlsafe(18)
     existing_invite = db.query(RegistrationInvite).filter(RegistrationInvite.code == code).first()
     if existing_invite:
@@ -285,16 +322,27 @@ async def create_registration_invite(
         detail={"code": invite.code, "expires_at": invite.expires_at.isoformat() if invite.expires_at else None},
     )
     db.commit()
-    db.refresh(invite)
-    return invite
+    invite = (
+        db.query(RegistrationInvite)
+        .options(joinedload(RegistrationInvite.created_by_user), joinedload(RegistrationInvite.used_by_user))
+        .filter(RegistrationInvite.id == invite.id)
+        .one()
+    )
+    return serialize_registration_invite(invite)
 
 
 @router.get("/invites", response_model=List[InviteResponse])
 async def list_registration_invites(
     _: str = Depends(get_admin_from_token),
     db: Session = Depends(get_db),
-) -> List[RegistrationInvite]:
-    return db.query(RegistrationInvite).order_by(RegistrationInvite.created_at.desc()).all()
+) -> List[Dict[str, Any]]:
+    invites = (
+        db.query(RegistrationInvite)
+        .options(joinedload(RegistrationInvite.created_by_user), joinedload(RegistrationInvite.used_by_user))
+        .order_by(RegistrationInvite.created_at.desc())
+        .all()
+    )
+    return [serialize_registration_invite(invite) for invite in invites]
 
 
 @router.patch("/invites/{invite_id}/toggle", response_model=InviteResponse)
@@ -302,7 +350,7 @@ async def toggle_registration_invite(
     invite_id: int,
     admin_username: str = Depends(get_admin_from_token),
     db: Session = Depends(get_db),
-) -> RegistrationInvite:
+) -> Dict[str, Any]:
     invite = db.query(RegistrationInvite).filter(RegistrationInvite.id == invite_id).first()
     if not invite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="邀请码不存在")
@@ -317,8 +365,13 @@ async def toggle_registration_invite(
         detail={"is_active": invite.is_active},
     )
     db.commit()
-    db.refresh(invite)
-    return invite
+    invite = (
+        db.query(RegistrationInvite)
+        .options(joinedload(RegistrationInvite.created_by_user), joinedload(RegistrationInvite.used_by_user))
+        .filter(RegistrationInvite.id == invite_id)
+        .one()
+    )
+    return serialize_registration_invite(invite)
 
 
 @router.post("/credit-codes", response_model=CreditCodeResponse)
