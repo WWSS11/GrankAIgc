@@ -5,6 +5,7 @@ import sys
 
 DEFAULT_SECRET_KEY = "your-secret-key-change-this-in-production"
 DEFAULT_ADMIN_PASSWORD = "admin123"
+APP_VERSION = "1.0.0"
 SERVER_DEPLOYMENT_ENVS = {"production", "staging", "server"}
 PLACEHOLDER_SECRET_VALUES = {
     "",
@@ -47,6 +48,9 @@ def get_env_file_path():
 
 
 class Settings(BaseSettings):
+    APP_VERSION: str = APP_VERSION
+    RELEASE_REPO: str = "mumu-0922/GankAIGC"
+
     # 服务器配置
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 9800
@@ -125,6 +129,13 @@ class Settings(BaseSettings):
     TASK_WORKER_POLL_INTERVAL: float = 2.0
     TASK_WORKER_HEARTBEAT_INTERVAL: float = 30.0
     TASK_WORKER_STALE_TIMEOUT_SECONDS: int = 1800
+    VPS_UPDATE_ENABLED: bool = False
+    VPS_UPDATE_WORKDIR: str = "/app/source"
+    VPS_UPDATE_LOG_FILE: str = "/app/source/logs/vps-update.log"
+    VPS_UPDATE_COMMAND: str = (
+        "(docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.update.yml "
+        "--profile update up --build -d updater)"
+    )
 
     model_config = SettingsConfigDict(
         env_file=get_env_file_path(),

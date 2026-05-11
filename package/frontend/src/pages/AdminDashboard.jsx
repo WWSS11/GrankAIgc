@@ -18,7 +18,12 @@ import {
   Database,
   Clock,
   FileText,
-  Loader2
+  Loader2,
+  Github,
+  ExternalLink,
+  Copy,
+  X,
+  UploadCloud
 } from 'lucide-react';
 import ConfigManager from '../components/ConfigManager';
 import SessionMonitor from '../components/SessionMonitor';
@@ -37,6 +42,7 @@ const ADMIN_COMPACT_TABLE_SCROLL_CLASS = 'overflow-auto max-h-[20rem]';
 const ADMIN_TABLE_SCROLL_CLASS = 'overflow-auto max-h-[37rem]';
 const ADMIN_COMPACT_TABLE_HEAD_CLASS = 'sticky top-0 z-10 bg-white';
 const ADMIN_TABLE_HEAD_CLASS = 'sticky top-0 z-10 bg-gray-50';
+const CURRENT_APP_VERSION = 'v1.0.0';
 
 const formatAdminNumber = (value) => Number(value || 0).toLocaleString();
 
@@ -106,6 +112,11 @@ const AdminDashboard = () => {
   const [newCreditCode, setNewCreditCode] = useState('');
   const [newCreditAmount, setNewCreditAmount] = useState(10);
   const [creditTopUps, setCreditTopUps] = useState({});
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState(null);
+  const [loadingUpdateStatus, setLoadingUpdateStatus] = useState(false);
+  const [runningUpdate, setRunningUpdate] = useState(false);
+  const [confirmingVpsUpdate, setConfirmingVpsUpdate] = useState(false);
 
   useEffect(() => {
     if (adminToken) {
@@ -217,6 +228,42 @@ const AdminDashboard = () => {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     toast.success('已复制到剪贴板');
+  };
+
+  const fetchUpdateStatus = async () => {
+    setLoadingUpdateStatus(true);
+    try {
+      const response = await axios.get('/api/admin/update/status', {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      setUpdateStatus(response.data);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '检查更新失败');
+    } finally {
+      setLoadingUpdateStatus(false);
+    }
+  };
+
+  const openUpdateModal = () => {
+    setShowUpdateModal(true);
+    setConfirmingVpsUpdate(false);
+    fetchUpdateStatus();
+  };
+
+  const handleRunVpsUpdate = async () => {
+    setRunningUpdate(true);
+    try {
+      const response = await axios.post('/api/admin/update/run', {}, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      toast.success(response.data?.message || '更新任务已启动');
+      setConfirmingVpsUpdate(false);
+      setUpdateStatus((current) => current ? { ...current, last_run: response.data } : current);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '启动在线更新失败');
+    } finally {
+      setRunningUpdate(false);
+    }
   };
 
   const fetchAccountData = async () => {
@@ -518,6 +565,14 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-3">
               <BrandLogo size="sm" />
               <span className="hidden sm:inline text-sm font-semibold text-slate-500">管理后台</span>
+              <button
+                onClick={openUpdateModal}
+                className="inline-flex items-center gap-2 rounded-xl bg-white/80 px-3 py-1.5 text-sm font-semibold text-slate-700 border border-white/70 shadow-sm hover:bg-white transition-colors"
+                title="查看版本和 VPS 在线更新"
+              >
+                {updateStatus?.current_version || CURRENT_APP_VERSION}
+                <RefreshCw className="w-4 h-4 text-slate-400" />
+              </button>
             </div>
             <button
               onClick={handleLogout}
@@ -1223,6 +1278,169 @@ const AdminDashboard = () => {
           </main>
         </div>
       </div>
+
+      {showUpdateModal && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
+                  <UploadCloud className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">在线更新</h3>
+                  <p className="text-xs text-slate-500">仅用于 VPS / Docker 部署</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUpdateModal(false)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                title="关闭"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5 px-6 py-6">
+              {loadingUpdateStatus && !updateStatus ? (
+                <div className="flex items-center justify-center gap-3 py-10 text-slate-500">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  正在检查 GitHub 最新版本
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="text-xs font-medium text-slate-500">当前版本</p>
+                      <p className="mt-2 text-2xl font-bold text-slate-900">
+                        {updateStatus?.current_version || CURRENT_APP_VERSION}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="text-xs font-medium text-slate-500">最新版本</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <p className="text-2xl font-bold text-slate-900">
+                          {updateStatus?.latest_version || '-'}
+                        </p>
+                        {updateStatus?.release_update_available ? (
+                          <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">可更新</span>
+                        ) : updateStatus && (
+                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">最新</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {updateStatus?.release_error && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      GitHub Release 检查失败：{updateStatus.release_error}
+                    </div>
+                  )}
+
+                  <div className="rounded-xl border border-slate-100 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">源码状态</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {updateStatus?.source_update_available === true
+                            ? '远程 main 有新提交'
+                            : updateStatus?.source_update_available === false
+                              ? '本地源码已是最新'
+                              : (updateStatus?.git_error || '未检测源码目录')}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                        updateStatus?.can_run_update
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {updateStatus?.can_run_update ? '可一键更新' : '未开启'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!updateStatus?.can_run_update && updateStatus?.disabled_reason && (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                      {updateStatus.disabled_reason}
+                    </div>
+                  )}
+
+                  {updateStatus?.last_run && (
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                      {updateStatus.last_run.message}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={fetchUpdateStatus}
+                      disabled={loadingUpdateStatus}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${loadingUpdateStatus ? 'animate-spin' : ''}`} />
+                      检查更新
+                    </button>
+                    <a
+                      href={updateStatus?.release_url || 'https://github.com/mumu-0922/GankAIGC/releases'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      <Github className="h-4 w-4" />
+                      查看发布
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={() => copyToClipboard(updateStatus?.setup_command || 'docker compose --env-file .env.docker up --build -d app worker')}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      <Copy className="h-4 w-4" />
+                      复制升级命令
+                    </button>
+                    <button
+                      onClick={() => setConfirmingVpsUpdate(true)}
+                      disabled={!updateStatus?.can_run_update || runningUpdate}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:bg-slate-300"
+                    >
+                      {runningUpdate ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                      VPS 在线更新
+                    </button>
+                  </div>
+
+                  {confirmingVpsUpdate && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm font-semibold text-amber-900">确认开始 VPS 在线更新？</p>
+                      <p className="mt-1 text-xs leading-5 text-amber-800">
+                        服务会拉取 GitHub 最新代码并重建 app / worker 容器，期间可能短暂不可用。
+                      </p>
+                      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                        <button
+                          onClick={handleRunVpsUpdate}
+                          disabled={runningUpdate}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:bg-amber-300"
+                        >
+                          {runningUpdate && <Loader2 className="h-4 w-4 animate-spin" />}
+                          确认更新
+                        </button>
+                        <button
+                          onClick={() => setConfirmingVpsUpdate(false)}
+                          disabled={runningUpdate}
+                          className="inline-flex flex-1 items-center justify-center rounded-lg border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-60"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

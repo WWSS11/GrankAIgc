@@ -36,6 +36,7 @@ from app.schemas import (
 )
 from app.services.concurrency import concurrency_manager
 from app.services.credit_service import CreditService, serialize_credit_transaction
+from app.services import update_service
 from app.utils.auth import (
     create_access_token,
     verify_token,
@@ -297,6 +298,39 @@ async def list_admin_audit_logs(
         .all()
     )
     return [serialize_admin_audit_log(log) for log in logs]
+
+
+@router.get("/update/status")
+async def get_update_status(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
+    return await update_service.build_update_status()
+
+
+@router.post("/update/run")
+async def run_vps_update(
+    admin_username: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    can_run_update, disabled_reason = update_service.can_run_vps_update()
+    if not can_run_update:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=disabled_reason or "VPS 在线更新不可用",
+        )
+
+    try:
+        result = update_service.start_vps_update()
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    write_admin_audit_log(
+        db,
+        admin_username,
+        "start_vps_update",
+        target_type="system_update",
+        detail={"message": result.get("message"), "command": result.get("command")},
+    )
+    db.commit()
+    return result
 
 
 @router.post("/invites", response_model=InviteResponse)

@@ -90,7 +90,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="GankAIGC",
     description="高质量论文润色与原创性学术表达增强",
-    version="1.0.0",
+    version=settings.APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -212,7 +212,7 @@ async def root():
     """根路径"""
     return {
         "message": "GankAIGC API",
-        "version": "1.0.0",
+        "version": settings.APP_VERSION,
         "docs": "/docs"
     }
 
