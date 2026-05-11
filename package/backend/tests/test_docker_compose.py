@@ -38,3 +38,10 @@ def test_docker_env_example_enables_vps_update_by_default():
     assert "BACKUP_RETENTION_DAYS=14" in env_example
     assert "BACKUP_INTERVAL_SECONDS=86400" in env_example
     assert "docker-compose.update.yml" not in env_example
+
+
+def test_ci_creates_runtime_env_file_before_compose_validation():
+    workflow = (PROJECT_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+    assert "cp .env.docker.example .env.docker" in workflow
+    assert "docker compose --env-file .env.docker config --quiet" in workflow
