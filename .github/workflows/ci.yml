@@ -70,16 +70,24 @@ jobs:
         working-directory: package/frontend
         run: npm run build
 
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: package/frontend/dist
+          if-no-files-found: error
+
   docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build --build-arg DOCKER_IMAGE_PREFIX= -t gankaigc:ci .
-
       - name: Validate Docker Compose config
         run: |
           cp .env.docker.example .env.docker
           docker compose --env-file .env.docker config --quiet
+          docker compose --env-file .env.docker --profile update config --quiet
+
+      - name: Build Docker image
+        run: docker build --build-arg DOCKER_IMAGE_PREFIX= -t gankaigc:ci .

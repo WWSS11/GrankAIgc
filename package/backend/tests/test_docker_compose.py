@@ -53,3 +53,11 @@ def test_ci_creates_runtime_env_file_before_compose_validation():
 
     assert "cp .env.docker.example .env.docker" in workflow
     assert "docker compose --env-file .env.docker config --quiet" in workflow
+
+
+def test_ci_validates_update_profile_and_keeps_frontend_dist_artifact():
+    workflow = (PROJECT_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+    assert "docker compose --env-file .env.docker --profile update config --quiet" in workflow
+    assert "actions/upload-artifact@v4" in workflow
+    assert "package/frontend/dist" in workflow
