@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import inspect, func, case
 from sqlalchemy.orm import Session, defer, joinedload
@@ -36,7 +37,7 @@ from app.schemas import (
 )
 from app.services.concurrency import concurrency_manager
 from app.services.credit_service import CreditService, serialize_credit_transaction
-from app.services import update_service
+from app.services import operations_service, update_service
 from app.utils.auth import (
     create_access_token,
     verify_token,
@@ -55,6 +56,10 @@ class AdminLoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     username: str
+
+
+class ModelConnectionTestRequest(BaseModel):
+    stage: str
 
 
 def _session_user_identity(user: Optional[User]) -> Dict[str, Optional[str]]:
@@ -330,6 +335,59 @@ async def run_vps_update(
         detail={"message": result.get("message"), "command": result.get("command")},
     )
     db.commit()
+    return result
+
+
+@router.get("/operations/status")
+async def get_operations_status(
+    _: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    return await operations_service.get_operations_status(db)
+
+
+@router.get("/operations/backups/{filename}/download")
+async def download_backup_file(
+    filename: str,
+    _: str = Depends(get_admin_from_token),
+) -> FileResponse:
+    try:
+        backup_file = operations_service.resolve_backup_file(filename)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return FileResponse(
+        backup_file,
+        filename=backup_file.name,
+        media_type="application/octet-stream",
+    )
+
+
+@router.post("/operations/model-test")
+async def test_admin_model_connection(
+    payload: ModelConnectionTestRequest,
+    admin_username: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    result = await operations_service.test_model_connection(payload.stage)
+    write_admin_audit_log(
+        db,
+        admin_username,
+        "test_model_connection",
+        target_type="system_config",
+        detail={
+            "stage": payload.stage,
+            "ok": result.get("ok"),
+            "model": result.get("model"),
+            "base_url": result.get("base_url"),
+            "message": result.get("message"),
+        },
+    )
+    db.commit()
+    if not result.get("ok"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result)
     return result
 
 

@@ -254,6 +254,21 @@ def test_admin_dashboard_uses_left_sidebar_navigation():
     assert "lg:min-h-[calc(100vh-8rem)]" in admin_dashboard
 
 
+def test_admin_dashboard_exposes_operations_status_tab():
+    admin_dashboard = (FRONTEND_SRC / "pages" / "AdminDashboard.jsx").read_text(encoding="utf-8")
+    operations_panel = (FRONTEND_SRC / "components" / "AdminOperationsPanel.jsx").read_text(encoding="utf-8")
+
+    assert "'operations'" in admin_dashboard
+    assert "运维状态" in admin_dashboard
+    assert "AdminOperationsPanel" in admin_dashboard
+    assert 'data-admin-operations-panel="true"' in operations_panel
+    assert "/api/admin/operations/status" in operations_panel
+    assert "/api/admin/operations/backups/" in operations_panel
+    assert "最近备份" in operations_panel
+    assert "数据库" in operations_panel
+    assert "在线更新" in operations_panel
+
+
 def test_admin_dashboard_exposes_user_management_ban_controls():
     admin_dashboard = (FRONTEND_SRC / "pages" / "AdminDashboard.jsx").read_text(encoding="utf-8")
 
@@ -471,6 +486,20 @@ def test_config_manager_exposes_registration_enabled_switch():
     assert "response.data.system.registration_enabled" in config_manager
 
 
+def test_config_manager_exposes_admin_model_connection_tests():
+    config_manager = (FRONTEND_SRC / "components" / "ConfigManager.jsx").read_text(encoding="utf-8")
+
+    assert "/api/admin/operations/model-test" in config_manager
+    assert "handleTestModel" in config_manager
+    assert "renderTestButton" in config_manager
+    assert "测试连接" in config_manager
+    assert "handleTestModel(stage)" in config_manager
+    assert "renderTestButton('polish')" in config_manager
+    assert "renderTestButton('enhance')" in config_manager
+    assert "renderTestButton('emotion')" in config_manager
+    assert "renderTestButton('compression')" in config_manager
+
+
 def test_api_config_guide_keeps_previous_sections_open_when_expanding_next():
     api_guide = (FRONTEND_SRC / "components" / "ApiConfigGuide.jsx").read_text(encoding="utf-8")
 
@@ -542,7 +571,7 @@ def test_served_static_bundle_includes_admin_tab_url_persistence():
 
     assert "URLSearchParams" in static_bundle
     assert '"tab"' in static_bundle
-    assert '"dashboard","sessions","accounts","database","config"' in static_bundle
+    assert '"dashboard","operations","sessions","accounts","database","config"' in static_bundle
     assert "Word 排版文件大小限制" not in static_bundle
     assert "MAX_UPLOAD_FILE_SIZE_MB" not in static_bundle
     assert "max_upload_file_size_mb" not in static_bundle

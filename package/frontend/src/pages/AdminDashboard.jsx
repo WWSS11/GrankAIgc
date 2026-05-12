@@ -28,12 +28,13 @@ import {
 import ConfigManager from '../components/ConfigManager';
 import SessionMonitor from '../components/SessionMonitor';
 import DatabaseManager from '../components/DatabaseManager';
+import AdminOperationsPanel from '../components/AdminOperationsPanel';
 import BrandLogo from '../components/BrandLogo';
 import BeerIcon from '../components/BeerIcon';
 import { formatChinaDateTime } from '../utils/dateTime';
 
 const DEFAULT_ADMIN_TAB = 'dashboard';
-const ADMIN_TAB_IDS = ['dashboard', 'sessions', 'accounts', 'database', 'config', 'audit'];
+const ADMIN_TAB_IDS = ['dashboard', 'operations', 'sessions', 'accounts', 'database', 'config', 'audit'];
 const ADMIN_ACCOUNT_FORM_CLASS = 'grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_5rem_7rem] gap-3 mb-5';
 const ADMIN_ACCOUNT_INPUT_CLASS = 'w-full min-w-0 h-12 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
 const ADMIN_ACCOUNT_WIDE_INPUT_CLASS = `${ADMIN_ACCOUNT_INPUT_CLASS} sm:col-span-2`;
@@ -517,6 +518,13 @@ const AdminDashboard = () => {
       icon: Activity,
       activeClass: 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30',
       inactiveClass: 'text-gray-600 hover:text-blue-600 hover:bg-blue-50',
+    },
+    {
+      id: 'operations',
+      label: '运维状态',
+      icon: Shield,
+      activeClass: 'bg-gradient-to-r from-teal-600 to-teal-500 text-white shadow-lg shadow-teal-500/30',
+      inactiveClass: 'text-gray-600 hover:text-teal-600 hover:bg-teal-50',
     },
     {
       id: 'accounts',
@@ -1199,6 +1207,10 @@ const AdminDashboard = () => {
         {/* Session Monitor Tab */}
         {activeTab === 'sessions' && (
           <SessionMonitor adminToken={adminToken} />
+        )}
+
+        {activeTab === 'operations' && (
+          <AdminOperationsPanel adminToken={adminToken} />
         )}
         
         {/* Database Manager Tab */}

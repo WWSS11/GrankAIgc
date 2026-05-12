@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Settings, Save, RefreshCw, Cpu, Brain } from 'lucide-react';
+import { Settings, Save, RefreshCw, Cpu, Brain, PlugZap } from 'lucide-react';
 import ApiConfigGuide from './ApiConfigGuide';
 
 const ConfigManager = ({ adminToken }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingStage, setTestingStage] = useState('');
 
   const [formData, setFormData] = useState({
     POLISH_MODEL: '',
@@ -98,6 +99,38 @@ const ConfigManager = ({ adminToken }) => {
     }
   };
 
+  const handleTestModel = async (stage) => {
+    setTestingStage(stage);
+    try {
+      const response = await axios.post('/api/admin/operations/model-test', { stage }, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      toast.success(response.data?.message || 'API 连接测试通过');
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      toast.error(detail?.message || detail || 'API 连接测试失败');
+    } finally {
+      setTestingStage('');
+    }
+  };
+
+  const renderTestButton = (stage) => (
+    <button
+      type="button"
+      onClick={() => handleTestModel(stage)}
+      disabled={testingStage === stage}
+      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
+      title="测试已保存到服务端的模型配置"
+    >
+      {testingStage === stage ? (
+        <RefreshCw className="h-4 w-4 animate-spin" />
+      ) : (
+        <PlugZap className="h-4 w-4" />
+      )}
+      测试连接
+    </button>
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -113,14 +146,17 @@ const ConfigManager = ({ adminToken }) => {
 
       {/* 润色模型配置 */}
       <div className="bg-white rounded-2xl shadow-ios p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
-            <Cpu className="w-5 h-5 text-teal-600" />
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+              <Cpu className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">润色模型配置</h3>
+              <p className="text-xs text-gray-400">用于第一阶段：论文语言润色</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">润色模型配置</h3>
-            <p className="text-xs text-gray-400">用于第一阶段：论文语言润色</p>
-          </div>
+          {renderTestButton('polish')}
         </div>
 
         <div className="space-y-5">
@@ -176,14 +212,17 @@ const ConfigManager = ({ adminToken }) => {
 
       {/* 增强模型配置 */}
       <div className="bg-white rounded-2xl shadow-ios p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
-            <Cpu className="w-5 h-5 text-cyan-600" />
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
+              <Cpu className="w-5 h-5 text-cyan-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">论文增强模型配置</h3>
+              <p className="text-xs text-gray-400">用于第二阶段：原创性增强</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">论文增强模型配置</h3>
-            <p className="text-xs text-gray-400">用于第二阶段：原创性增强</p>
-          </div>
+          {renderTestButton('enhance')}
         </div>
 
         <div className="space-y-5">
@@ -239,14 +278,17 @@ const ConfigManager = ({ adminToken }) => {
 
       {/* 感情文章润色模型配置 */}
       <div className="bg-white rounded-2xl shadow-ios p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-            <Cpu className="w-5 h-5 text-rose-600" />
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+              <Cpu className="w-5 h-5 text-rose-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">感情文章润色模型配置</h3>
+              <p className="text-xs text-gray-400">用于感情类文章的风格化润色</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">感情文章润色模型配置</h3>
-            <p className="text-xs text-gray-400">用于感情类文章的风格化润色</p>
-          </div>
+          {renderTestButton('emotion')}
         </div>
 
         <div className="space-y-5">
@@ -478,6 +520,10 @@ const ConfigManager = ({ adminToken }) => {
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
             />
             <p className="mt-1.5 text-xs text-gray-400">可与其他模型使用相同的地址</p>
+          </div>
+
+          <div className="md:col-span-2 flex justify-end">
+            {renderTestButton('compression')}
           </div>
 
           <div>

@@ -170,6 +170,10 @@ class Settings(BaseSettings):
     VPS_UPDATE_COMMAND: str = (
         "docker compose --env-file .env.docker --profile update up --build -d updater"
     )
+    BACKUP_DIR: str = "backups"
+    BACKUP_RETENTION_DAYS: int = 14
+    BACKUP_INTERVAL_SECONDS: int = 86400
+    MODEL_TEST_TIMEOUT_SECONDS: float = 15.0
 
     model_config = SettingsConfigDict(
         env_file=get_env_file_path(),
