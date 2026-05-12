@@ -42,7 +42,7 @@ const ADMIN_COMPACT_TABLE_SCROLL_CLASS = 'overflow-auto max-h-[20rem]';
 const ADMIN_TABLE_SCROLL_CLASS = 'overflow-auto max-h-[37rem]';
 const ADMIN_COMPACT_TABLE_HEAD_CLASS = 'sticky top-0 z-10 bg-white';
 const ADMIN_TABLE_HEAD_CLASS = 'sticky top-0 z-10 bg-gray-50';
-const CURRENT_APP_VERSION = 'v1.0.1';
+const CURRENT_APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v1.0.1';
 
 const formatAdminNumber = (value) => Number(value || 0).toLocaleString();
 

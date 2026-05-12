@@ -50,8 +50,24 @@ jobs:
         working-directory: package/frontend
         run: npm ci
 
+      - name: Set package version
+        id: package_version
+        run: |
+          if ("${{ github.event.inputs.version }}" -ne "") {
+            $version = "${{ github.event.inputs.version }}"
+          } elseif ("${{ github.ref_type }}" -eq "tag") {
+            $version = "${{ github.ref_name }}"
+          } else {
+            $version = "dev-${{ github.sha }}"
+          }
+          Set-Content -Path "package\VERSION" -Value $version -Encoding UTF8
+          "version=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
       - name: Build frontend
         working-directory: package/frontend
+        env:
+          VITE_APP_VERSION: ${{ steps.package_version.outputs.version }}
         run: npm run build
 
       - name: Copy frontend build to static
@@ -137,8 +153,23 @@ jobs:
         working-directory: package/frontend
         run: npm ci
 
+      - name: Set package version
+        id: package_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            version="${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            version="${{ github.ref_name }}"
+          else
+            version="dev-${{ github.sha }}"
+          fi
+          printf '%s\n' "$version" > package/VERSION
+          echo "version=$version" >> $GITHUB_OUTPUT
+
       - name: Build frontend
         working-directory: package/frontend
+        env:
+          VITE_APP_VERSION: ${{ steps.package_version.outputs.version }}
         run: npm run build
 
       - name: Copy frontend build to static
@@ -204,8 +235,23 @@ jobs:
         working-directory: package/frontend
         run: npm ci
 
+      - name: Set package version
+        id: package_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            version="${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            version="${{ github.ref_name }}"
+          else
+            version="dev-${{ github.sha }}"
+          fi
+          printf '%s\n' "$version" > package/VERSION
+          echo "version=$version" >> $GITHUB_OUTPUT
+
       - name: Build frontend
         working-directory: package/frontend
+        env:
+          VITE_APP_VERSION: ${{ steps.package_version.outputs.version }}
         run: npm run build
 
       - name: Copy frontend build to static

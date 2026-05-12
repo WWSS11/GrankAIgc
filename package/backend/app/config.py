@@ -5,7 +5,42 @@ import sys
 
 DEFAULT_SECRET_KEY = "your-secret-key-change-this-in-production"
 DEFAULT_ADMIN_PASSWORD = "admin123"
-APP_VERSION = "1.0.1"
+DEFAULT_APP_VERSION = "1.0.1"
+
+
+def _normalize_app_version(value: str) -> str:
+    value = value.strip()
+    return value[1:] if value.startswith("v") else value
+
+
+def _candidate_version_dirs(app_dir: str | None = None) -> list[str]:
+    candidates = [
+        app_dir,
+        os.environ.get("GANKAIGC_APP_DIR"),
+        getattr(sys, "_MEIPASS", None),
+        os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else None,
+        os.getcwd(),
+    ]
+    return [path for path in candidates if path]
+
+
+def read_app_version(app_dir: str | None = None) -> str:
+    for search_dir in _candidate_version_dirs(app_dir):
+        version_file = os.path.join(search_dir, "VERSION")
+        if os.path.exists(version_file):
+            try:
+                value = open(version_file, encoding="utf-8-sig").read().strip()
+            except OSError:
+                value = ""
+            if value:
+                return _normalize_app_version(value)
+    env_version = os.environ.get("GANKAIGC_VERSION", "").strip()
+    if env_version:
+        return _normalize_app_version(env_version)
+    return DEFAULT_APP_VERSION
+
+
+APP_VERSION = read_app_version()
 SERVER_DEPLOYMENT_ENVS = {"production", "staging", "server"}
 PLACEHOLDER_SECRET_VALUES = {
     "",

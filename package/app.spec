@@ -78,6 +78,8 @@ a = Analysis(
     datas=[
         # 包含前端静态文件
         ('static', 'static'),
+        # 包含构建版本号
+        ('VERSION', '.'),
         # 包含后端 app 目录
         ('backend/app', 'app'),
     ],
