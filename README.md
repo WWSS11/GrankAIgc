@@ -398,6 +398,8 @@ VPS_UPDATE_ENABLED=true
 
 解压后双击 `start.bat` 即可运行。
 
+> 注意：解压路径必须全是英文，路径中不要包含中文、空格或特殊符号。
+
 #### 直接下载使用
 
 进入 [Releases](https://github.com/mumu-0922/GankAIGC/releases/latest)，下载：
