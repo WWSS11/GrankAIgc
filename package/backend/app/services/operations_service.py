@@ -236,7 +236,7 @@ async def get_operations_status(db: Session) -> Dict[str, Any]:
     backup_status = get_backup_status()
     return {
         "app": {
-            "version": update_service.normalize_version(settings.APP_VERSION),
+            "version": update_service.get_current_app_version(),
             "environment": settings.APP_ENV,
             "env_file": get_env_file_path(),
             "backup_dir": str(get_backup_dir()),

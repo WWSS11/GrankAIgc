@@ -27,7 +27,7 @@ import {
   Save,
   Trash2,
   X,
-  UploadCloud
+  DownloadCloud
 } from 'lucide-react';
 import ConfigManager from '../components/ConfigManager';
 import SessionMonitor from '../components/SessionMonitor';
@@ -866,6 +866,10 @@ const AdminDashboard = () => {
   const avgCharsPerTask = completedTaskCount > 0
     ? Math.round(totalCharsProcessed / completedTaskCount)
     : 0;
+  const updateAvailable = Boolean(
+    updateStatus?.release_update_available || updateStatus?.source_update_available
+  );
+  const updateStatusLabel = updateAvailable ? '可一键更新' : '已是最新版本';
 
   // Admin Dashboard
   return (
@@ -1212,10 +1216,10 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className={ADMIN_COMPACT_TABLE_SCROLL_CLASS}>
-                  <table className="min-w-[46rem] divide-y divide-gray-200">
+                  <table className="w-full table-auto divide-y divide-gray-200">
                     <thead className={ADMIN_COMPACT_TABLE_HEAD_CLASS}>
                       <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <th className="py-3 pr-4 whitespace-nowrap">
+                        <th className="w-10 py-3 pr-4 whitespace-nowrap">
                           <input
                             type="checkbox"
                             checked={invites.length > 0 && selectedInviteIds.length === invites.length}
@@ -1224,11 +1228,11 @@ const AdminDashboard = () => {
                             title="全选邀请码"
                           />
                         </th>
-                        <th className="py-3 pr-4 whitespace-nowrap">邀请码</th>
-                        <th className="py-3 pr-4 whitespace-nowrap">状态</th>
-                        <th className="py-3 pr-4 whitespace-nowrap">来源</th>
-                        <th className="py-3 pr-4 whitespace-nowrap">注册用户</th>
-                        <th className="py-3 pr-4 whitespace-nowrap">操作</th>
+                        <th className="w-[26%] py-3 pr-4 whitespace-nowrap">邀请码</th>
+                        <th className="w-[9%] py-3 pr-4 whitespace-nowrap">状态</th>
+                        <th className="w-[20%] py-3 pr-4 whitespace-nowrap">来源</th>
+                        <th className="w-[20%] py-3 pr-4 whitespace-nowrap">注册用户</th>
+                        <th className="w-[7rem] py-3 pr-4 whitespace-nowrap">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1238,7 +1242,7 @@ const AdminDashboard = () => {
                         </tr>
                       ) : invites.map((invite) => (
                         <tr key={invite.id}>
-                          <td className="py-3 pr-4 whitespace-nowrap">
+                          <td className="w-10 py-3 pr-4 whitespace-nowrap">
                             <input
                               type="checkbox"
                               checked={selectedInviteIds.includes(invite.id)}
@@ -1247,29 +1251,29 @@ const AdminDashboard = () => {
                               title="选择邀请码"
                             />
                           </td>
-                          <td className="py-3 pr-4 whitespace-nowrap">
+                          <td className="w-[26%] py-3 pr-4 whitespace-nowrap">
                             <button
                               onClick={() => copyToClipboard(invite.code)}
-                              className="font-mono text-sm text-blue-700 hover:text-blue-900"
+                              className="max-w-full truncate font-mono text-sm text-blue-700 hover:text-blue-900"
                               title="点击复制"
                             >
                               {invite.code}
                             </button>
                           </td>
-                          <td className="py-3 pr-4 whitespace-nowrap">
+                          <td className="w-[9%] py-3 pr-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               invite.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
                             }`}>
                               {invite.is_active ? '启用' : '停用'}
                             </span>
                           </td>
-                          <td className="py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="w-[20%] py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
                             {invite.created_by_type === 'user' ? (
-                              <div>
-                                <div className="font-medium text-gray-900">
+                              <div className="min-w-0">
+                                <div className="truncate font-medium text-gray-900">
                                   {invite.created_by_display_name || `用户 #${invite.created_by_user_id}`}
                                 </div>
-                                <div className="text-xs text-gray-500">用户邀请 · ID #{invite.created_by_user_id}</div>
+                                <div className="truncate text-xs text-gray-500">用户邀请 · ID #{invite.created_by_user_id}</div>
                               </div>
                             ) : (
                               <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
@@ -1277,17 +1281,17 @@ const AdminDashboard = () => {
                               </span>
                             )}
                           </td>
-                          <td className="py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="w-[20%] py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
                             {invite.used_by_user_id ? (
-                              <div>
-                                <div className="font-medium text-gray-900">
+                              <div className="min-w-0">
+                                <div className="truncate font-medium text-gray-900">
                                   {invite.used_by_display_name || `用户 #${invite.used_by_user_id}`}
                                 </div>
                                 <div className="text-xs text-gray-500">ID #{invite.used_by_user_id}</div>
                               </div>
                             ) : '-'}
                           </td>
-                          <td className="py-3 pr-4 whitespace-nowrap">
+                          <td className="w-[7rem] py-3 pr-4 whitespace-nowrap">
                             <button
                               onClick={() => handleToggleInvite(invite.id)}
                               className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded transition-colors"
@@ -1883,7 +1887,7 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                  <UploadCloud className="h-5 w-5 text-indigo-600" />
+                  <DownloadCloud className="h-5 w-5 text-indigo-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">在线更新</h3>
@@ -1948,11 +1952,13 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                       <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                        updateStatus?.can_run_update
+                        updateStatus?.can_run_update && updateAvailable
                           ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-100 text-slate-600'
+                          : updateStatus?.can_run_update
+                            ? 'bg-slate-100 text-slate-600'
+                            : 'bg-slate-100 text-slate-600'
                       }`}>
-                        {updateStatus?.can_run_update ? '可一键更新' : '未开启'}
+                        {updateStatus?.can_run_update ? updateStatusLabel : '未开启'}
                       </span>
                     </div>
                   </div>
@@ -2000,10 +2006,10 @@ const AdminDashboard = () => {
                     </button>
                     <button
                       onClick={() => setConfirmingVpsUpdate(true)}
-                      disabled={!updateStatus?.can_run_update || runningUpdate}
+                      disabled={!updateStatus?.can_run_update || !updateAvailable || runningUpdate}
                       className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:bg-slate-300"
                     >
-                      {runningUpdate ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                      {runningUpdate ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadCloud className="h-4 w-4" />}
                       VPS 在线更新
                     </button>
                   </div>

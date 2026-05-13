@@ -35,6 +35,7 @@ def test_vps_updater_rebuilds_default_service_set_so_backup_starts():
     compose = (PROJECT_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     updater_section = compose.split("\n  updater:", 1)[1].split("\n  postgres:", 1)[0]
 
+    assert "git fetch --tags origin main" in updater_section
     assert "docker compose --env-file .env.docker up --build -d" in updater_section
     assert "up --build -d app worker" not in updater_section
 

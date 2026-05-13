@@ -38,6 +38,28 @@ def is_newer_version(latest: Optional[str], current: str) -> bool:
     return _version_parts(latest) > _version_parts(current)
 
 
+def get_source_version_tag() -> Optional[str]:
+    if not os.path.isdir(settings.VPS_UPDATE_WORKDIR):
+        return None
+
+    try:
+        tagged = _run_command(["git", "describe", "--tags", "--exact-match", "HEAD"])
+        if tagged.returncode == 0 and tagged.stdout.strip():
+            return tagged.stdout.strip()
+
+        latest_tag = _run_command(["git", "describe", "--tags", "--abbrev=0"])
+        if latest_tag.returncode == 0 and latest_tag.stdout.strip():
+            return latest_tag.stdout.strip()
+    except Exception:
+        return None
+
+    return None
+
+
+def get_current_app_version() -> str:
+    return normalize_version(get_source_version_tag() or settings.APP_VERSION)
+
+
 async def fetch_latest_release() -> Dict[str, Any]:
     url = f"{GITHUB_API_BASE}/repos/{settings.RELEASE_REPO}/releases/latest"
     async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -71,7 +93,7 @@ def get_git_revision_status() -> Dict[str, Any]:
         if current.returncode != 0:
             raise RuntimeError((current.stderr or current.stdout).strip())
 
-        fetch = _run_command(["git", "fetch", "origin", "main"])
+        fetch = _run_command(["git", "fetch", "--tags", "origin", "main"])
         if fetch.returncode != 0:
             raise RuntimeError((fetch.stderr or fetch.stdout).strip())
 
@@ -120,7 +142,7 @@ def can_run_vps_update() -> Tuple[bool, Optional[str]]:
 
 
 async def build_update_status() -> Dict[str, Any]:
-    current_version = normalize_version(settings.APP_VERSION)
+    current_version = get_current_app_version()
     latest_release: Dict[str, Any] = {}
     release_error = None
     try:

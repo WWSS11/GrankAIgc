@@ -202,6 +202,31 @@ def test_admin_invite_and_credit_code_forms_use_matching_layout():
     assert "grid grid-cols-1 sm:grid-cols-[1fr_120px_auto]" not in admin_dashboard
 
 
+def test_admin_update_modal_uses_source_and_release_latest_state():
+    admin_dashboard = (FRONTEND_SRC / "pages" / "AdminDashboard.jsx").read_text(encoding="utf-8")
+
+    assert "DownloadCloud" in admin_dashboard
+    assert "const updateAvailable" in admin_dashboard
+    assert "const updateStatusLabel" in admin_dashboard
+    assert "已是最新版本" in admin_dashboard
+    assert "VPS 在线更新" in admin_dashboard
+    assert "DownloadCloud className" in admin_dashboard
+    assert "can_run_update && updateAvailable" in admin_dashboard
+
+
+def test_admin_invite_table_uses_compact_full_width_layout_like_credit_codes():
+    admin_dashboard = (FRONTEND_SRC / "pages" / "AdminDashboard.jsx").read_text(encoding="utf-8")
+
+    assert 'table className="w-full table-auto divide-y divide-gray-200"' in admin_dashboard
+    assert "min-w-[46rem]" not in admin_dashboard
+    assert 'className="w-10 py-3 pr-4 whitespace-nowrap"' in admin_dashboard
+    assert 'className="w-[26%] py-3 pr-4 whitespace-nowrap"' in admin_dashboard
+    assert 'className="w-[9%] py-3 pr-4 whitespace-nowrap"' in admin_dashboard
+    assert 'className="w-[20%] py-3 pr-4 whitespace-nowrap"' in admin_dashboard
+    assert 'className="w-[20%] py-3 pr-4 whitespace-nowrap"' in admin_dashboard
+    assert 'className="w-[7rem] py-3 pr-4 whitespace-nowrap"' in admin_dashboard
+
+
 def test_admin_dashboard_hides_word_formatter_statistics_until_feature_is_ready():
     admin_dashboard = (FRONTEND_SRC / "pages" / "AdminDashboard.jsx").read_text(encoding="utf-8")
 

@@ -81,7 +81,8 @@ services:
       VPS_UPDATE_LOG_FILE: /app/source/logs/vps-update.log
     working_dir: /app/source
     command: >
-      sh -lc "git pull --ff-only origin main &&
+      sh -lc "git fetch --tags origin main &&
+      git pull --ff-only origin main &&
       docker compose --env-file .env.docker up --build -d"
     volumes:
       - type: bind

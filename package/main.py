@@ -60,6 +60,7 @@ from app.database import check_database_connection, init_db
 from app.routes import admin, auth, prompts, optimization, user
 from app.runtime import refresh_cors_middleware
 from app.services.rate_limit import SlidingWindowLimiter
+from app.services.update_service import get_current_app_version
 from app.models.models import CustomPrompt
 from app.database import SessionLocal
 from app.services.ai_service import get_default_polish_prompt, get_default_enhance_prompt
@@ -101,7 +102,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="GankAIGC",
     description="高质量论文润色与原创性学术表达增强",
-    version=settings.APP_VERSION,
+    version=get_current_app_version(),
     lifespan=lifespan,
 )
 
@@ -396,7 +397,7 @@ def _serve_spa_index_or_api_info(error_message: str | None = None):
         return {"error": error_message}
     return {
         "message": "GankAIGC API",
-        "version": settings.APP_VERSION,
+        "version": get_current_app_version(),
         "docs": "/docs",
         "note": "静态文件目录不存在，仅 API 可用"
     }
