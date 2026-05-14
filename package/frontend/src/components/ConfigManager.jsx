@@ -8,6 +8,12 @@ const ConfigManager = ({ adminToken }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testingStage, setTestingStage] = useState('');
+  const [keyStatus, setKeyStatus] = useState({
+    polish: { set: false, last4: '' },
+    enhance: { set: false, last4: '' },
+    emotion: { set: false, last4: '' },
+    compression: { set: false, last4: '' }
+  });
 
   const [formData, setFormData] = useState({
     POLISH_MODEL: '',
@@ -42,21 +48,39 @@ const ConfigManager = ({ adminToken }) => {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
 
-      // 填充表单,直接使用返回的值
+      setKeyStatus({
+        polish: {
+          set: Boolean(response.data.polish.api_key_set),
+          last4: response.data.polish.api_key_last4 || ''
+        },
+        enhance: {
+          set: Boolean(response.data.enhance.api_key_set),
+          last4: response.data.enhance.api_key_last4 || ''
+        },
+        emotion: {
+          set: Boolean(response.data.emotion?.api_key_set),
+          last4: response.data.emotion?.api_key_last4 || ''
+        },
+        compression: {
+          set: Boolean(response.data.compression?.api_key_set),
+          last4: response.data.compression?.api_key_last4 || ''
+        }
+      });
+
       setFormData({
         POLISH_MODEL: response.data.polish.model || '',
-        POLISH_API_KEY: response.data.polish.api_key || '',
+        POLISH_API_KEY: '',
         POLISH_BASE_URL: response.data.polish.base_url || '',
         ENHANCE_MODEL: response.data.enhance.model || '',
-        ENHANCE_API_KEY: response.data.enhance.api_key || '',
+        ENHANCE_API_KEY: '',
         ENHANCE_BASE_URL: response.data.enhance.base_url || '',
         EMOTION_MODEL: response.data.emotion?.model || '',
-        EMOTION_API_KEY: response.data.emotion?.api_key || '',
+        EMOTION_API_KEY: '',
         EMOTION_BASE_URL: response.data.emotion?.base_url || '',
         MAX_CONCURRENT_USERS: response.data.system.max_concurrent_users?.toString() || '',
         HISTORY_COMPRESSION_THRESHOLD: response.data.system.history_compression_threshold?.toString() || '',
         COMPRESSION_MODEL: response.data.compression?.model || '',
-        COMPRESSION_API_KEY: response.data.compression?.api_key || '',
+        COMPRESSION_API_KEY: '',
         COMPRESSION_BASE_URL: response.data.compression?.base_url || '',
         SEGMENT_SKIP_THRESHOLD: response.data.system.segment_skip_threshold?.toString() || '',
         API_REQUEST_INTERVAL: response.data.system.api_request_interval?.toString() || '6',
@@ -112,6 +136,14 @@ const ConfigManager = ({ adminToken }) => {
     } finally {
       setTestingStage('');
     }
+  };
+
+  const getApiKeyPlaceholder = (stage) => {
+    const status = keyStatus[stage];
+    if (status?.set) {
+      return status.last4 ? `已配置，后四位 ${status.last4}；留空则不修改` : '已配置；留空则不修改';
+    }
+    return 'sk-... 或 Google API Key';
   };
 
   const renderTestButton = (stage) => (
@@ -184,11 +216,11 @@ const ConfigManager = ({ adminToken }) => {
               type="password"
               value={formData.POLISH_API_KEY}
               onChange={(e) => setFormData({ ...formData, POLISH_API_KEY: e.target.value })}
-              placeholder="sk-... 或 Google API Key"
+              placeholder={getApiKeyPlaceholder('polish')}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
             />
             <p className="mt-1.5 text-xs text-gray-400">
-              从 API 服务商获取的密钥，请妥善保管
+              留空不会修改已保存密钥；填写新 Key 才会替换
             </p>
           </div>
 
@@ -250,11 +282,11 @@ const ConfigManager = ({ adminToken }) => {
               type="password"
               value={formData.ENHANCE_API_KEY}
               onChange={(e) => setFormData({ ...formData, ENHANCE_API_KEY: e.target.value })}
-              placeholder="sk-... 或 Google API Key"
+              placeholder={getApiKeyPlaceholder('enhance')}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
             />
             <p className="mt-1.5 text-xs text-gray-400">
-              可与润色模型使用相同的 Key
+              留空不会修改已保存密钥；填写新 Key 才会替换
             </p>
           </div>
 
@@ -316,9 +348,12 @@ const ConfigManager = ({ adminToken }) => {
               type="password"
               value={formData.EMOTION_API_KEY}
               onChange={(e) => setFormData({ ...formData, EMOTION_API_KEY: e.target.value })}
-              placeholder="sk-... 或 Google API Key"
+              placeholder={getApiKeyPlaceholder('emotion')}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
             />
+            <p className="mt-1.5 text-xs text-gray-400">
+              留空不会修改已保存密钥；填写新 Key 才会替换
+            </p>
           </div>
 
           <div>
@@ -502,10 +537,10 @@ const ConfigManager = ({ adminToken }) => {
               type="password"
               value={formData.COMPRESSION_API_KEY}
               onChange={(e) => setFormData({ ...formData, COMPRESSION_API_KEY: e.target.value })}
-              placeholder="sk-... 或 Google API Key"
+              placeholder={getApiKeyPlaceholder('compression')}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
             />
-            <p className="mt-1.5 text-xs text-gray-400">可与其他模型使用相同的 Key</p>
+            <p className="mt-1.5 text-xs text-gray-400">留空不会修改已保存密钥；填写新 Key 才会替换</p>
           </div>
 
           <div className="md:col-span-2">

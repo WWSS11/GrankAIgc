@@ -20,7 +20,7 @@
 | SEC-004 | 高危 | 待修复 | 前端生产依赖存在已知安全公告 | `package/frontend/package.json`、`package-lock.json` |
 | SEC-005 | 高危/中危 | 待修复 | 后端依赖存在已知安全公告 | `package/backend/requirements.txt`、`package/requirements.txt` |
 | SEC-006 | 中危 | 待修复 | Word Formatter 上传接口先完整读入内存再检查大小，默认无限制 | `word_formatter/routes.py`、`config.py` |
-| SEC-007 | 中危 | 待修复 | 管理后台配置接口会把完整系统模型 API Key 返回给浏览器 | `admin.py`、`ConfigManager.jsx` |
+| SEC-007 | 中危 | 已完成 | 管理后台配置接口会把完整系统模型 API Key 返回给浏览器 | `admin.py`、`ConfigManager.jsx` |
 | SEC-008 | 中低危 | 待修复 | 浏览器 token 存在 `localStorage`，安全响应头不足 | `api/index.js`、`AdminDashboard.jsx`、应用中间件 |
 
 ---
@@ -174,13 +174,13 @@
 
 **实施清单：**
 
-- [ ] 修改 `GET /api/admin/config` 响应，用 `api_key_set: bool` 和 `api_key_last4: str` 替代完整 `api_key`。
-- [ ] 修改 `ConfigManager.jsx`，API Key 输入框显示空占位，不再预填完整密钥。
-- [ ] 修改配置保存逻辑：未提交或为空的 API Key 不覆盖已有值。
-- [ ] 新增后端测试：`GET /api/admin/config` 响应中不包含完整 key。
-- [ ] 新增后端测试：只更新模型名、不提交 API Key 时，旧 API Key 保持不变。
-- [ ] 运行 `cd package/backend; python -m pytest tests/test_auth_api.py tests/test_operations_api.py -q`。
-- [ ] 运行 `cd package/frontend; npm run build`。
+- [x] 修改 `GET /api/admin/config` 响应，用 `api_key_set: bool` 和 `api_key_last4: str` 替代完整 `api_key`。
+- [x] 修改 `ConfigManager.jsx`，API Key 输入框显示空占位，不再预填完整密钥。
+- [x] 修改配置保存逻辑：未提交或为空的 API Key 不覆盖已有值。
+- [x] 新增后端测试：`GET /api/admin/config` 响应中不包含完整 key。
+- [x] 新增后端测试：只更新模型名、不提交 API Key 时，旧 API Key 保持不变。
+- [x] 运行 `cd package/backend; python -m pytest tests/test_auth_api.py tests/test_operations_api.py -q`。
+- [x] 运行 `cd package/frontend; npm run build`。
 
 **完成标准：** 保存后，完整模型 API Key 不再从服务端返回到浏览器。
 
@@ -243,3 +243,4 @@ npm run test:e2e
 | --- | --- | --- | --- |
 | 2026-05-14 | 创建初始安全修复计划 | 待执行 | 等待确认后再开始改代码 |
 | 2026-05-14 | SEC-001 静态文件路径穿越 | 已完成 | 聚焦测试 `tests/test_package_static_security.py -q` 已通过；完整后端测试 `python -m pytest -q` 已通过，209 passed |
+| 2026-05-14 | SEC-007 后台配置接口 API Key 脱敏 | 已完成 | 相关后端测试 `tests/test_auth_api.py tests/test_operations_api.py -q` 已通过；前端 `npm run build` 已通过；完整后端测试 `python -m pytest -q` 已通过，211 passed |

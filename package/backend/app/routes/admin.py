@@ -147,6 +147,13 @@ SENSITIVE_SYSTEM_SETTING_MARKERS = (
     "encryption_key",
 )
 
+MODEL_API_KEY_FIELDS = {
+    "POLISH_API_KEY",
+    "ENHANCE_API_KEY",
+    "EMOTION_API_KEY",
+    "COMPRESSION_API_KEY",
+}
+
 
 def verify_admin_credentials(username: str, password: str) -> bool:
     return username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD
@@ -204,6 +211,14 @@ def serialize_admin_audit_log(log: AdminAuditLog) -> Dict[str, Any]:
         "target_id": log.target_id,
         "detail": detail,
         "created_at": log.created_at,
+    }
+
+
+def _api_key_summary(value: str | None) -> Dict[str, Any]:
+    api_key = (value or "").strip()
+    return {
+        "api_key_set": bool(api_key),
+        "api_key_last4": api_key[-4:] if api_key else "",
     }
 
 
@@ -1448,22 +1463,22 @@ async def get_config(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
     return {
         "polish": {
             "model": settings.POLISH_MODEL,
-            "api_key": settings.POLISH_API_KEY or "",
+            **_api_key_summary(settings.POLISH_API_KEY),
             "base_url": settings.POLISH_BASE_URL or "",
         },
         "enhance": {
             "model": settings.ENHANCE_MODEL,
-            "api_key": settings.ENHANCE_API_KEY or "",
+            **_api_key_summary(settings.ENHANCE_API_KEY),
             "base_url": settings.ENHANCE_BASE_URL or "",
         },
         "emotion": {
             "model": getattr(settings, 'EMOTION_MODEL', settings.POLISH_MODEL),
-            "api_key": getattr(settings, 'EMOTION_API_KEY', settings.POLISH_API_KEY) or "",
+            **_api_key_summary(getattr(settings, 'EMOTION_API_KEY', settings.POLISH_API_KEY)),
             "base_url": getattr(settings, 'EMOTION_BASE_URL', settings.POLISH_BASE_URL) or "",
         },
         "compression": {
             "model": settings.COMPRESSION_MODEL,
-            "api_key": settings.COMPRESSION_API_KEY or "",
+            **_api_key_summary(settings.COMPRESSION_API_KEY),
             "base_url": settings.COMPRESSION_BASE_URL or "",
         },
         "thinking": {
@@ -1490,6 +1505,11 @@ async def update_config(
     admin_username: str = Depends(get_admin_from_token),
     db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
+    updates = {
+        key: value
+        for key, value in updates.items()
+        if not (key in MODEL_API_KEY_FIELDS and not str(value or "").strip())
+    }
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="缺少更新内容")
 

@@ -785,6 +785,68 @@ def test_admin_config_save_keeps_compose_env_secrets_when_env_file_has_defaults(
     assert login_response.status_code == 200
 
 
+def test_admin_config_does_not_return_full_model_api_keys(client, monkeypatch):
+    api_keys = {
+        "POLISH_API_KEY": "sk-polish-secret-123456",
+        "ENHANCE_API_KEY": "sk-enhance-secret-abcdef",
+        "EMOTION_API_KEY": "sk-emotion-secret-789012",
+        "COMPRESSION_API_KEY": "sk-compression-secret-ghijkl",
+    }
+    for key, value in api_keys.items():
+        monkeypatch.setattr(config_module.settings, key, value, raising=False)
+
+    response = client.get("/api/admin/config", headers=_admin_auth_headers(client))
+
+    assert response.status_code == 200
+    body = response.json()
+    for section, full_key in (
+        ("polish", api_keys["POLISH_API_KEY"]),
+        ("enhance", api_keys["ENHANCE_API_KEY"]),
+        ("emotion", api_keys["EMOTION_API_KEY"]),
+        ("compression", api_keys["COMPRESSION_API_KEY"]),
+    ):
+        assert "api_key" not in body[section]
+        assert body[section]["api_key_set"] is True
+        assert body[section]["api_key_last4"] == full_key[-4:]
+        assert full_key not in response.text
+
+
+def test_admin_config_save_ignores_blank_model_api_key_updates(client, monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "APP_ENV=development",
+                "SECRET_KEY=test-secret-key",
+                "ADMIN_PASSWORD=test-admin-password",
+                "POLISH_MODEL=old-model",
+                "POLISH_API_KEY=existing-secret-key",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(config_module, "get_env_file_path", lambda: str(env_file))
+    monkeypatch.setattr(config_module.settings, "APP_ENV", "development")
+    monkeypatch.setattr(config_module.settings, "SECRET_KEY", "test-secret-key")
+    monkeypatch.setattr(config_module.settings, "ADMIN_PASSWORD", "test-admin-password")
+    monkeypatch.setattr(config_module.settings, "POLISH_MODEL", "old-model")
+    monkeypatch.setattr(config_module.settings, "POLISH_API_KEY", "existing-secret-key")
+
+    response = client.post(
+        "/api/admin/config",
+        json={"POLISH_MODEL": "new-model", "POLISH_API_KEY": "   "},
+        headers=_admin_auth_headers(client),
+    )
+
+    assert response.status_code == 200
+    env_content = env_file.read_text(encoding="utf-8")
+    assert "POLISH_MODEL=new-model" in env_content
+    assert "POLISH_API_KEY=existing-secret-key" in env_content
+    assert config_module.settings.POLISH_MODEL == "new-model"
+    assert config_module.settings.POLISH_API_KEY == "existing-secret-key"
+
+
 def test_worker_healthcheck_is_disabled_in_docker_compose():
     compose_path = Path(__file__).resolve().parents[3] / "docker-compose.yml"
     compose_text = compose_path.read_text(encoding="utf-8")
