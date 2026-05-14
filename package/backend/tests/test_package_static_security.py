@@ -48,10 +48,10 @@ def test_static_fallback_serves_existing_static_file():
     package_main = _load_package_main()
     client = TestClient(package_main.app)
 
-    response = client.get("/sample-paper.md")
+    response = client.get("/gankaigc-logo.svg")
 
     assert response.status_code == 200
-    assert "基于深度学习的图像识别技术研究" in response.text
+    assert 'viewBox="442 369 1180 1180"' in response.text
 
 
 def test_static_fallback_keeps_spa_route_fallback():
