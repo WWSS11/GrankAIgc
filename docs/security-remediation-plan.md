@@ -14,7 +14,7 @@
 
 | 编号 | 严重程度 | 状态 | 问题 | 主要文件 |
 | --- | --- | --- | --- | --- |
-| SEC-001 | 严重 | 部分完成，完整后端测试受阻 | 未登录路径穿越，可读取 `package/static` 外的服务端文件 | `package/main.py` |
+| SEC-001 | 严重 | 已完成 | 未登录路径穿越，可读取 `package/static` 外的服务端文件 | `package/main.py` |
 | SEC-002 | 高危 | 待修复 | 用户可控模型 `base_url` 会造成后端 SSRF | `provider_config_service.py`、`optimization.py`、`ai_service.py`、`word_formatter/routes.py` |
 | SEC-003 | 高危 | 待修复 | Docker 在线更新挂载 Docker socket，并执行配置中的 shell 命令 | `docker-compose.yml`、`update_service.py`、`admin.py` |
 | SEC-004 | 高危 | 待修复 | 前端生产依赖存在已知安全公告 | `package/frontend/package.json`、`package-lock.json` |
@@ -47,7 +47,7 @@
   - 只有当 `target.is_relative_to(static_root)` 且 `target.is_file()` 时才返回文件。
 - [x] 保留合法 SPA 路由回退到 `index.html` 的行为。
 - [x] 运行 `cd package/backend; python -m pytest tests/test_package_static_security.py -q`。
-- [ ] 运行 `cd package/backend; python -m pytest -q`。
+- [x] 运行 `cd package/backend; python -m pytest -q`。
 
 **完成标准：** 编码后的路径穿越请求不再能返回源码、配置或其他服务端文件；正常前端资源和 SPA 路由仍可用。
 
@@ -242,4 +242,4 @@ npm run test:e2e
 | 日期 | 项目 | 结果 | 备注 |
 | --- | --- | --- | --- |
 | 2026-05-14 | 创建初始安全修复计划 | 待执行 | 等待确认后再开始改代码 |
-| 2026-05-14 | SEC-001 静态文件路径穿越 | 部分完成 | 聚焦测试 `tests/test_package_static_security.py -q` 已通过；完整后端测试因 PostgreSQL 测试库 `gankaigc_test` 连接超时未完成 |
+| 2026-05-14 | SEC-001 静态文件路径穿越 | 已完成 | 聚焦测试 `tests/test_package_static_security.py -q` 已通过；完整后端测试 `python -m pytest -q` 已通过，209 passed |
