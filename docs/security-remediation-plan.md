@@ -18,7 +18,7 @@
 | SEC-002 | 高危 | 待修复 | 用户可控模型 `base_url` 会造成后端 SSRF | `provider_config_service.py`、`optimization.py`、`ai_service.py`、`word_formatter/routes.py` |
 | SEC-003 | 高危 | 待修复 | Docker 在线更新挂载 Docker socket，并执行配置中的 shell 命令 | `docker-compose.yml`、`update_service.py`、`admin.py` |
 | SEC-004 | 高危 | 已完成 | 前端生产依赖存在已知安全公告 | `package/frontend/package.json`、`package-lock.json` |
-| SEC-005 | 高危/中危 | 待修复 | 后端依赖存在已知安全公告 | `package/backend/requirements.txt`、`package/requirements.txt` |
+| SEC-005 | 高危/中危 | 已完成 | 后端依赖存在已知安全公告 | `package/backend/requirements.txt`、`package/requirements.txt` |
 | SEC-006 | 中危 | 待修复 | Word Formatter 上传接口先完整读入内存再检查大小，默认无限制 | `word_formatter/routes.py`、`config.py` |
 | SEC-007 | 中危 | 已完成 | 管理后台配置接口会把完整系统模型 API Key 返回给浏览器 | `admin.py`、`ConfigManager.jsx` |
 | SEC-008 | 中低危 | 待修复 | 浏览器 token 存在 `localStorage`，安全响应头不足 | `api/index.js`、`AdminDashboard.jsx`、应用中间件 |
@@ -131,14 +131,14 @@
 
 **实施清单：**
 
-- [ ] 升级 `fastapi` 到能带入安全版 `starlette` 的版本；如有必要，显式固定兼容的安全版 `starlette`。
-- [ ] 升级 `python-multipart` 到 `>=0.0.27`。
-- [ ] 升级 `python-jose[cryptography]` 到 `>=3.4.0`；如果兼容性不好，再评估迁移到维护更活跃的 JWT 库。
-- [ ] 升级 `python-dotenv` 到 `>=1.2.2`。
-- [ ] 如果 `pytest` 仍在运行时依赖中，升级到安全版本；更好的做法是把测试依赖从生产 requirements 中拆出去。
-- [ ] 同步修改 `package/requirements.txt` 和 `package/backend/requirements.txt`。
-- [ ] 运行 `cd package/backend; python -m pytest -q`。
-- [ ] 运行 `cd package/backend; uvx pip-audit -r requirements.txt`。
+- [x] 升级 `fastapi` 到能带入安全版 `starlette` 的版本；如有必要，显式固定兼容的安全版 `starlette`。
+- [x] 升级 `python-multipart` 到 `>=0.0.27`。
+- [x] 升级 `python-jose[cryptography]` 到 `>=3.4.0`；如果兼容性不好，再评估迁移到维护更活跃的 JWT 库。
+- [x] 升级 `python-dotenv` 到 `>=1.2.2`。
+- [x] 如果 `pytest` 仍在运行时依赖中，升级到安全版本；更好的做法是把测试依赖从生产 requirements 中拆出去。
+- [x] 同步修改 `package/requirements.txt` 和 `package/backend/requirements.txt`。
+- [x] 运行 `cd package/backend; python -m pytest -q`。
+- [x] 运行 `cd package/backend; uvx pip-audit -r requirements.txt`。
 
 **完成标准：** 后端测试通过，并且 pip 审计中没有未处理的高影响运行时漏洞。
 
@@ -245,3 +245,4 @@ npm run test:e2e
 | 2026-05-14 | SEC-001 静态文件路径穿越 | 已完成 | 聚焦测试 `tests/test_package_static_security.py -q` 已通过；完整后端测试 `python -m pytest -q` 已通过，209 passed |
 | 2026-05-14 | SEC-004 前端依赖安全公告 | 已完成 | `npm audit --omit=dev` 已通过，0 vulnerabilities；`npm run build` 已通过；`npm run test:e2e` 已通过，4 passed |
 | 2026-05-14 | SEC-007 后台配置接口 API Key 脱敏 | 已完成 | 相关后端测试 `tests/test_auth_api.py tests/test_operations_api.py -q` 已通过；前端 `npm run build` 已通过；完整后端测试 `python -m pytest -q` 已通过，211 passed |
+| 2026-05-14 | SEC-005 后端依赖安全公告 | 已完成 | 完整后端测试 `python -m pytest -q` 已通过，211 passed；`uvx pip-audit -r requirements.txt` 已通过，No known vulnerabilities found |
