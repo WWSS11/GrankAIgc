@@ -101,13 +101,16 @@
 - [x] 删除独立 `updater` profile，默认部署不再提供可由后台触发的宿主机 Docker 控制通道。
 - [x] `update_service.start_vps_update` 直接拒绝执行，不再调用 `subprocess.Popen` 或 shell。
 - [x] `/api/admin/update/status` 保留版本检测能力，并返回固定手动升级命令：
-  - `docker compose --env-file .env.docker pull`
-  - `docker compose --env-file .env.docker up -d`
+  - `git fetch --tags origin main`
+  - `git pull --ff-only origin main`
+  - `docker compose --env-file .env.docker up -d --build`
 - [x] `/api/admin/update/run` 始终返回 `403`，提示管理员 SSH 到 VPS 执行升级命令。
 - [x] 从 Dockerfile 中移除 Docker CLI、Docker Compose plugin 和 `/app/source` safe.directory 配置。
 - [x] 前端后台更新弹窗移除“一键 VPS 在线更新”，改为“复制 SSH 升级命令”。
 - [x] `.env.docker.example` 默认关闭 `VPS_UPDATE_ENABLED`，删除 `VPS_UPDATE_COMMAND` 和 Docker socket 相关说明。
 - [x] CI 不再验证 `--profile update`。
+- [x] 镜像内使用 `package/VERSION` 显示当前版本，避免依赖被移除的源码目录挂载。
+- [x] app 容器只读挂载宿主机 `backups/` 到 `/backups`，后台可查看备份文件但仍没有 Docker 控制权。
 - [x] 运行 `cd package/backend; python -m pytest tests/test_admin_update_api.py tests/test_docker_compose.py tests/test_dockerfile.py tests/test_frontend_redeem_entry.py -q`。
 
 **完成标准：** 默认 Docker 部署中，app 容器不再拥有 Docker socket 控制权；在线更新无法被改造成任意 shell 命令执行。

@@ -14,3 +14,9 @@ def test_dockerfile_does_not_install_docker_control_tools_in_app_image():
     assert "docker.io" not in app_stage
     assert "git config --system --add safe.directory /app/source" not in app_stage
     assert "docker compose version" not in app_stage
+
+
+def test_dockerfile_copies_packaged_version_file():
+    dockerfile = (PROJECT_ROOT / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "COPY package/VERSION /app/package/VERSION" in dockerfile

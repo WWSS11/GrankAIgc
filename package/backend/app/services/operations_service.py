@@ -46,6 +46,10 @@ def _format_bytes(size: int) -> str:
 
 
 def get_backup_dir() -> Path:
+    docker_backup_dir = Path("/backups")
+    if docker_backup_dir.exists() and docker_backup_dir.is_dir():
+        return docker_backup_dir
+
     configured = Path(settings.BACKUP_DIR)
     if configured.is_absolute():
         return configured
@@ -233,7 +237,6 @@ def get_onboarding_status(db: Session, backup_status: Optional[Dict[str, Any]] =
 
 async def get_operations_status(db: Session) -> Dict[str, Any]:
     can_run_update, disabled_reason = update_service.can_run_vps_update()
-    git_status = update_service.get_git_revision_status()
     backup_status = get_backup_status()
     return {
         "app": {
@@ -251,11 +254,6 @@ async def get_operations_status(db: Session) -> Dict[str, Any]:
             "mode": "manual_ssh",
             "can_run": can_run_update,
             "disabled_reason": disabled_reason,
-            "workdir": settings.VPS_UPDATE_WORKDIR,
-            "docker_socket_mounted": os.path.exists("/var/run/docker.sock"),
-            "host_project_dir": os.environ.get("GANKAIGC_HOST_PROJECT_DIR"),
-            "source_update_available": git_status.get("source_update_available"),
-            "git_error": git_status.get("error"),
         },
     }
 

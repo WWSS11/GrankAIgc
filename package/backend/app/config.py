@@ -5,7 +5,7 @@ import sys
 
 DEFAULT_SECRET_KEY = "your-secret-key-change-this-in-production"
 DEFAULT_ADMIN_PASSWORD = "admin123"
-DEFAULT_APP_VERSION = "1.0.1"
+DEFAULT_APP_VERSION = "1.0.7"
 
 
 def _normalize_app_version(value: str) -> str:
@@ -168,7 +168,7 @@ class Settings(BaseSettings):
     VPS_UPDATE_ENABLED: bool = False
     VPS_UPDATE_WORKDIR: str = "/app/source"
     VPS_UPDATE_LOG_FILE: str = "/app/source/logs/vps-update.log"
-    VPS_UPDATE_COMMAND: str = "docker compose --env-file .env.docker pull && docker compose --env-file .env.docker up -d"
+    VPS_UPDATE_COMMAND: str = "git fetch --tags origin main && git pull --ff-only origin main && docker compose --env-file .env.docker up -d --build"
     BACKUP_DIR: str = "backups"
     BACKUP_RETENTION_DAYS: int = 14
     BACKUP_INTERVAL_SECONDS: int = 86400

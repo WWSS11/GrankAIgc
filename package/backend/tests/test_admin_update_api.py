@@ -23,11 +23,11 @@ async def _fake_latest_release():
     }
 
 
-def test_current_app_version_prefers_mounted_source_git_tag(monkeypatch):
-    monkeypatch.setattr(config_module.settings, "APP_VERSION", "1.0.1", raising=False)
+def test_current_app_version_uses_packaged_version_without_source_mount(monkeypatch):
+    monkeypatch.setattr(config_module.settings, "APP_VERSION", "1.0.7", raising=False)
     monkeypatch.setattr(update_service, "get_source_version_tag", lambda: "v1.0.3")
 
-    assert update_service.get_current_app_version() == "v1.0.3"
+    assert update_service.get_current_app_version() == "v1.0.7"
 
 
 def test_git_revision_status_fetches_remote_tags(monkeypatch, tmp_path):
@@ -75,9 +75,12 @@ def test_admin_update_status_reports_manual_docker_update_command(client, monkey
     assert data["vps_update_enabled"] is False
     assert data["can_run_update"] is False
     assert data["update_mode"] == "manual_ssh"
-    assert "docker compose --env-file .env.docker pull" in data["setup_command"]
-    assert "docker compose --env-file .env.docker up -d" in data["setup_command"]
+    assert "git fetch --tags origin main" in data["setup_command"]
+    assert "git pull --ff-only origin main" in data["setup_command"]
+    assert "docker compose --env-file .env.docker up -d --build" in data["setup_command"]
+    assert "docker compose --env-file .env.docker pull" not in data["setup_command"]
     assert "docker.sock" not in data["setup_command"]
+    assert data["disabled_reason"] in (None, "")
 
 
 def test_admin_update_status_reports_latest_when_source_tag_matches_release(client, monkeypatch):
@@ -102,7 +105,7 @@ def test_admin_update_status_reports_latest_when_source_tag_matches_release(clie
     assert data["current_version"] == "v1.0.3"
     assert data["latest_version"] == "v1.0.3"
     assert data["release_update_available"] is False
-    assert data["source_update_available"] is False
+    assert data["source_update_available"] is None
     assert data["can_run_update"] is False
 
 
@@ -119,7 +122,7 @@ def test_vps_update_never_runs_from_web_process_even_when_docker_socket_exists(m
     can_run, reason = update_service.can_run_vps_update()
 
     assert can_run is False
-    assert "后台不直接控制 Docker" in reason
+    assert reason in (None, "")
 
 
 def test_start_vps_update_cannot_spawn_shell(monkeypatch):
@@ -131,4 +134,4 @@ def test_start_vps_update_cannot_spawn_shell(monkeypatch):
     try:
         update_service.start_vps_update()
     except RuntimeError as exc:
-        assert "后台不直接控制 Docker" in str(exc)
+        assert "SSH 到 VPS 项目目录执行升级命令" in str(exc)

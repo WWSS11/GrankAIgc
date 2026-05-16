@@ -9,12 +9,12 @@ from app.config import settings
 
 GITHUB_API_BASE = "https://api.github.com"
 MANUAL_DOCKER_UPDATE_COMMAND = (
-    "docker compose --env-file .env.docker pull\n"
-    "docker compose --env-file .env.docker up -d"
+    "git fetch --tags origin main\n"
+    "git pull --ff-only origin main\n"
+    "docker compose --env-file .env.docker up -d --build"
 )
-MANUAL_UPDATE_DISABLED_REASON = (
-    "为降低风险，后台不直接控制 Docker。请 SSH 到 VPS 执行升级命令。"
-)
+MANUAL_UPDATE_DISABLED_REASON = ""
+MANUAL_UPDATE_ERROR_MESSAGE = "请 SSH 到 VPS 项目目录执行升级命令。"
 
 
 def normalize_version(version: str) -> str:
@@ -61,7 +61,7 @@ def get_source_version_tag() -> Optional[str]:
 
 
 def get_current_app_version() -> str:
-    return normalize_version(get_source_version_tag() or settings.APP_VERSION)
+    return normalize_version(settings.APP_VERSION)
 
 
 async def fetch_latest_release() -> Dict[str, Any]:
@@ -127,7 +127,7 @@ def get_vps_update_command() -> str:
 
 
 def can_run_vps_update() -> Tuple[bool, Optional[str]]:
-    return False, MANUAL_UPDATE_DISABLED_REASON
+    return False, None
 
 
 async def build_update_status() -> Dict[str, Any]:
@@ -141,7 +141,6 @@ async def build_update_status() -> Dict[str, Any]:
 
     latest_version = normalize_version(latest_release.get("tag_name") or current_version)
     can_run_update, disabled_reason = can_run_vps_update()
-    git_status = get_git_revision_status()
 
     return {
         "current_version": current_version,
@@ -151,10 +150,10 @@ async def build_update_status() -> Dict[str, Any]:
         "release_url": latest_release.get("html_url") or f"https://github.com/{settings.RELEASE_REPO}/releases",
         "published_at": latest_release.get("published_at"),
         "release_error": release_error,
-        "source_update_available": git_status.get("source_update_available"),
-        "current_commit": git_status.get("current_commit"),
-        "remote_commit": git_status.get("remote_commit"),
-        "git_error": git_status.get("error"),
+        "source_update_available": None,
+        "current_commit": None,
+        "remote_commit": None,
+        "git_error": None,
         "vps_update_enabled": settings.VPS_UPDATE_ENABLED,
         "update_mode": "manual_ssh",
         "can_run_update": can_run_update,
@@ -165,4 +164,4 @@ async def build_update_status() -> Dict[str, Any]:
 
 
 def start_vps_update() -> Dict[str, Any]:
-    raise RuntimeError(MANUAL_UPDATE_DISABLED_REASON)
+    raise RuntimeError(MANUAL_UPDATE_ERROR_MESSAGE)

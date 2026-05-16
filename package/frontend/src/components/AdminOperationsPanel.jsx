@@ -140,10 +140,9 @@ const AdminOperationsPanel = ({ adminToken }) => {
           </div>
         </InfoCard>
 
-        <InfoCard icon={Server} title="在线更新" value={updateManual ? '手动 SSH' : '未就绪'} ok={updateManual}>
+        <InfoCard icon={Server} title="版本更新" value={updateManual ? '手动 SSH' : '未就绪'} ok={updateManual}>
           <div className="space-y-1">
             <div>模式：{updateManual ? '复制命令后 SSH 执行' : '-'}</div>
-            <div>源码更新：{status?.update?.source_update_available === true ? '有新提交' : status?.update?.source_update_available === false ? '已最新' : '未检测'}</div>
           </div>
         </InfoCard>
       </div>
@@ -259,16 +258,6 @@ const AdminOperationsPanel = ({ adminToken }) => {
               <p className="text-xs font-semibold uppercase text-gray-400">配置文件</p>
               <p className="mt-1 break-all font-mono text-gray-900">{status?.app?.env_file || '-'}</p>
             </div>
-            {status?.update?.disabled_reason && (
-              <div className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-amber-800">
-                {status.update.disabled_reason}
-              </div>
-            )}
-            {status?.update?.git_error && (
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-slate-600">
-                Git 状态：{status.update.git_error}
-              </div>
-            )}
           </div>
         </div>
       </div>

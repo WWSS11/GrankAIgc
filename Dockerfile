@@ -24,6 +24,7 @@ RUN apt-get update \
 COPY package/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY package/VERSION /app/package/VERSION
 COPY package/ ./
 COPY --from=frontend-builder /app/package/frontend/dist ./static
 

@@ -407,21 +407,12 @@ docker compose --env-file .env.docker down
 更新项目：
 
 ```bash
-git pull
-docker compose --env-file .env.docker up --build -d
+git fetch --tags origin main
+git pull --ff-only origin main
+docker compose --env-file .env.docker up -d --build
 ```
 
-VPS 在线更新默认内置：
-
-`.env.docker.example` 默认包含：
-
-```env
-VPS_UPDATE_ENABLED=true
-```
-
-正常执行 `docker compose --env-file .env.docker up --build -d` 后，进入管理后台，点击左上角版本号，即可检查更新并触发 VPS 在线更新。在线更新会拉取最新代码并重建 `app` / `worker`，不会删除 `postgres_data` 数据卷。
-
-> 在线更新需要 app 容器挂载宿主机 Docker socket 和项目源码目录，因此只建议用于你自己可信的 VPS 后台；不要把后台账号给不可信的人。
+进入管理后台，点击左上角版本号，可以检查 GitHub 最新 Release 并复制 SSH 升级命令。后台不会直接控制 Docker；需要 SSH 到 VPS 的项目目录手动执行上面的命令。
 
 > 不要随便执行 `docker compose down -v`、`docker volume rm gankaigc_postgres_data`。这些命令会删除 PostgreSQL 数据卷，用户、邀请码、兑换码、会话和啤酒流水都会丢失。
 

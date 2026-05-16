@@ -214,6 +214,13 @@ def test_admin_update_modal_uses_source_and_release_latest_state():
     assert "const updateStatusLabel" in admin_dashboard
     assert "已是最新版本" in admin_dashboard
     assert "复制 SSH 升级命令" in admin_dashboard
+    assert "git fetch --tags origin main" in admin_dashboard
+    assert "git pull --ff-only origin main" in admin_dashboard
+    assert "docker compose --env-file .env.docker up -d --build" in admin_dashboard
+    assert "源码状态" not in admin_dashboard
+    assert "/app/source" not in admin_dashboard
+    assert "为降低风险" not in admin_dashboard
+    assert "后台不直接控制 Docker" not in admin_dashboard
     assert "VPS 在线更新" not in admin_dashboard
     assert "确认开始 VPS 在线更新" not in admin_dashboard
     assert "handleRunVpsUpdate" not in admin_dashboard
@@ -311,7 +318,11 @@ def test_admin_dashboard_exposes_operations_status_tab():
     assert "/api/admin/operations/backups/" in operations_panel
     assert "最近备份" in operations_panel
     assert "数据库" in operations_panel
-    assert "在线更新" in operations_panel
+    assert "版本更新" in operations_panel
+    assert "手动 SSH" in operations_panel
+    assert "源码更新" not in operations_panel
+    assert "docker_socket_mounted" not in operations_panel
+    assert "disabled_reason" not in operations_panel
 
 
 def test_admin_dashboard_exposes_user_management_ban_controls():

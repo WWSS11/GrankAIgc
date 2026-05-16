@@ -8,7 +8,6 @@ def test_default_docker_compose_does_not_grant_app_docker_control():
     compose = (PROJECT_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     app_section = compose.split("\n  app:", 1)[1].split("\n  worker:", 1)[0]
 
-    assert "GANKAIGC_HOST_PROJECT_DIR" not in app_section
     assert "target: /app/source" not in app_section
     assert "/var/run/docker.sock" not in app_section
     assert "source: ${GANKAIGC_HOST_PROJECT_DIR:-${PWD:-.}}/.env.docker" in compose
@@ -16,6 +15,9 @@ def test_default_docker_compose_does_not_grant_app_docker_control():
     assert "- ./:/app/source" not in compose
     assert "/var/run/docker.sock" not in compose
     assert "updater:" not in compose
+    assert "source: ${GANKAIGC_HOST_PROJECT_DIR:-${PWD:-.}}/backups" in app_section
+    assert "target: /backups" in app_section
+    assert "read_only: true" in app_section
 
 
 def test_default_docker_compose_includes_postgres_backup_service():
@@ -43,6 +45,10 @@ def test_docker_env_example_disables_web_triggered_update():
     assert "VPS_UPDATE_ENABLED=false" in env_example
     assert "VPS_UPDATE_COMMAND" not in env_example
     assert "docker.sock" not in env_example
+    assert "git fetch --tags origin main" in env_example
+    assert "git pull --ff-only origin main" in env_example
+    assert "docker compose --env-file .env.docker up -d --build" in env_example
+    assert "docker compose --env-file .env.docker pull" not in env_example
     assert "BACKUP_RETENTION_DAYS=14" in env_example
     assert "BACKUP_INTERVAL_SECONDS=86400" in env_example
     assert "docker-compose.update.yml" not in env_example

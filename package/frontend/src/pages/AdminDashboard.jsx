@@ -47,7 +47,7 @@ const ADMIN_COMPACT_TABLE_SCROLL_CLASS = 'overflow-auto max-h-[20rem]';
 const ADMIN_TABLE_SCROLL_CLASS = 'overflow-auto max-h-[37rem]';
 const ADMIN_COMPACT_TABLE_HEAD_CLASS = 'sticky top-0 z-10 bg-white';
 const ADMIN_TABLE_HEAD_CLASS = 'sticky top-0 z-10 bg-gray-50';
-const CURRENT_APP_VERSION = window.__GANKAIGC_RUNTIME__?.appVersion || import.meta.env.VITE_APP_VERSION || 'v1.0.1';
+const CURRENT_APP_VERSION = window.__GANKAIGC_RUNTIME__?.appVersion || import.meta.env.VITE_APP_VERSION || 'v1.0.7';
 
 const formatAdminNumber = (value) => Number(value || 0).toLocaleString();
 
@@ -860,7 +860,7 @@ const AdminDashboard = () => {
   );
   const updateStatusLabel = updateAvailable ? '可手动升级' : '已是最新版本';
   const manualUpdateCommand = updateStatus?.setup_command
-    || 'docker compose --env-file .env.docker pull\ndocker compose --env-file .env.docker up -d';
+    || 'git fetch --tags origin main\ngit pull --ff-only origin main\ndocker compose --env-file .env.docker up -d --build';
 
   // Admin Dashboard
   return (
@@ -1933,14 +1933,8 @@ const AdminDashboard = () => {
                   <div className="rounded-xl border border-slate-100 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">源码状态</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {updateStatus?.source_update_available === true
-                            ? '远程 main 有新提交'
-                            : updateStatus?.source_update_available === false
-                              ? '本地源码已是最新'
-                              : (updateStatus?.git_error || '未检测源码目录')}
-                        </p>
+                        <p className="text-sm font-semibold text-slate-900">升级方式</p>
+                        <p className="mt-1 text-xs text-slate-500">SSH 到 VPS 项目目录执行复制的命令</p>
                       </div>
                       <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
                         updateAvailable
@@ -1951,12 +1945,6 @@ const AdminDashboard = () => {
                       </span>
                     </div>
                   </div>
-
-                  {updateStatus?.disabled_reason && (
-                    <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                      {updateStatus.disabled_reason}
-                    </div>
-                  )}
 
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <button
